@@ -3,92 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Zalo Like - Final Edition</title>
+    <title>Zalo Like - Thực Chiến</title>
     <script src="https://cdn.jsdelivr.net/npm/stream-chat"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .zalo-blue { background-color: #0068ff; }
-        .zalo-bg { background-color: #f0f2f5; }
-        .tab-active { color: #0068ff; border-bottom: 2px solid #0068ff; }
         ::-webkit-scrollbar { width: 0; }
+        .slide-up { animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
     </style>
 </head>
-<body class="zalo-bg h-screen flex flex-col items-center justify-center">
+<body class="bg-gray-100 h-screen flex flex-col items-center justify-center font-sans overflow-hidden">
 
-    <div id="login-screen" class="hidden w-full max-w-sm bg-white p-8 rounded-3xl shadow-2xl">
-        <h1 class="text-[#0068ff] text-4xl font-black italic text-center mb-8">Zalo Like</h1>
-        <input id="user" type="text" placeholder="Tên đăng nhập" class="w-full border-b p-3 mb-4 outline-none">
-        <input id="pass" type="password" placeholder="Mật khẩu" class="w-full border-b p-3 mb-6 outline-none">
-        <button onclick="auth()" class="w-full zalo-blue text-white py-4 rounded-2xl font-bold">ĐĂNG NHẬP / ĐĂNG KÝ</button>
+    <div id="login-screen" class="hidden w-full max-w-sm bg-white p-8 rounded-[40px] shadow-2xl text-center">
+        <h1 class="text-[#0068ff] text-5xl font-black italic mb-2 tracking-tighter">Zalo</h1>
+        <p class="text-gray-400 text-xs font-bold mb-8 uppercase tracking-widest">Like Edition</p>
+        <div class="space-y-4">
+            <input id="user" type="text" placeholder="Tên đăng nhập" class="w-full border-b-2 p-3 outline-none focus:border-blue-500 font-bold text-center">
+            <input id="pass" type="password" placeholder="Mật khẩu" class="w-full border-b-2 p-3 outline-none focus:border-blue-500 font-bold text-center">
+            <button onclick="auth()" id="lbtn" class="w-full zalo-blue text-white py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition-all">ĐĂNG NHẬP / ĐĂNG KÝ</button>
+        </div>
     </div>
 
-    <div id="app-screen" class="hidden w-full h-screen max-w-md bg-white shadow-2xl flex flex-col relative">
+    <div id="app-screen" class="hidden w-full h-screen max-w-md bg-white flex flex-col relative shadow-2xl">
         <header class="zalo-blue p-4 text-white flex items-center space-x-3">
-            <div onclick="showMyProfile()" class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center font-bold cursor-pointer" id="my-ava">U</div>
+            <div onclick="openProfile(currentUser)" class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center font-bold cursor-pointer" id="my-ava">?</div>
             <div class="flex-1 relative">
                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-white/50 text-xs"></i>
-                <input id="search-input" oninput="searchUsers()" placeholder="Tìm bạn bè..." class="w-full bg-white/10 rounded-full py-2 pl-9 pr-4 text-xs outline-none placeholder:text-white/50">
-                <div id="search-results" class="hidden absolute top-12 left-0 w-full bg-white shadow-2xl rounded-xl text-black z-50 divide-y overflow-hidden"></div>
+                <input id="search" oninput="searchUsers()" placeholder="Tìm bạn bè..." class="w-full bg-white/10 rounded-full py-2 pl-9 pr-4 text-xs outline-none placeholder:text-white/50">
+                <div id="search-res" class="hidden absolute top-11 left-0 w-full bg-white shadow-2xl rounded-xl text-black z-50 divide-y"></div>
             </div>
-            <button onclick="logout()"><i class="fa-solid fa-power-off"></i></button>
+            <button onclick="logout()"><i class="fa-solid fa-power-off text-sm"></i></button>
         </header>
 
-        <div id="view-content" class="flex-1 overflow-y-auto">
+        <div id="main-content" class="flex-1 overflow-y-auto">
             <div id="inbox-view" class="divide-y divide-gray-50"></div>
-            
-            <div id="req-view" class="hidden p-4 space-y-4">
-                <h3 class="text-xs font-bold text-gray-400 uppercase">Lời mời kết bạn</h3>
-                <div id="req-list"></div>
-            </div>
+            <div id="contact-view" class="hidden p-4"><p class="text-center text-gray-400 text-xs mt-10 italic">Đang cập nhật danh bạ...</p></div>
         </div>
 
-        <footer class="border-t flex justify-around p-2 bg-gray-50">
-            <button onclick="switchTab('inbox')" id="btn-inbox" class="flex flex-col items-center tab-active"><i class="fa-regular fa-message text-xl"></i><span class="text-[10px]">Tin nhắn</span></button>
-            <button onclick="switchTab('req')" id="btn-req" class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-user-group text-xl"></i><span class="text-[10px]">Danh bạ</span></button>
+        <footer class="border-t flex justify-around p-3 bg-gray-50">
+            <button onclick="switchTab('inbox')" class="flex flex-col items-center text-[#0068ff]"><i class="fa-regular fa-comment-dots text-xl"></i><span class="text-[9px] font-bold">Tin nhắn</span></button>
+            <button onclick="switchTab('contact')" class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-address-book text-xl"></i><span class="text-[9px] font-bold">Danh bạ</span></button>
         </footer>
 
-        <div id="chat-window" class="hidden absolute inset-0 bg-white flex flex-col z-40 animate-in slide-in-from-right duration-200">
-            <header class="zalo-blue p-4 text-white flex items-center">
+        <div id="chat-win" class="hidden absolute inset-0 bg-white flex flex-col z-40 slide-up">
+            <header class="zalo-blue p-4 text-white flex items-center shadow-md">
                 <button onclick="closeChat()" class="mr-4"><i class="fa-solid fa-chevron-left"></i></button>
-                <div id="chat-target-name" class="font-bold flex-1">Đang tải...</div>
-                <button onclick="showFriendProfile()"><i class="fa-solid fa-circle-info"></i></button>
+                <div id="chat-title" class="font-bold flex-1 text-sm">...</div>
+                <button onclick="openProfile(targetUser)" class="opacity-80"><i class="fa-solid fa-circle-user text-xl"></i></button>
             </header>
-            <div id="messages" class="flex-1 zalo-bg overflow-y-auto p-4 space-y-4"></div>
-            <div class="p-3 border-t flex space-x-2 bg-white">
-                <input id="msg-input" placeholder="Nhập tin nhắn..." class="flex-1 outline-none text-sm">
-                <button onclick="send()" class="text-[#0068ff] text-xl px-2"><i class="fa-solid fa-paper-plane"></i></button>
+            <div id="msgs" class="flex-1 bg-[#ebeef2] overflow-y-auto p-4 space-y-4"></div>
+            <div class="p-3 border-t flex items-center space-x-2 bg-white">
+                <input id="minput" placeholder="Nhập tin nhắn..." class="flex-1 outline-none text-sm p-1">
+                <button onclick="send()" class="text-[#0068ff] text-2xl px-2"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
         </div>
     </div>
 
-    <div id="profile-modal" class="hidden fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-6">
-        <div class="bg-white rounded-3xl w-full max-w-xs p-6 text-center">
-            <div id="p-ava" class="w-20 h-20 zalo-blue mx-auto rounded-full mb-4 text-white text-3xl flex items-center justify-center font-bold">U</div>
-            <h2 id="p-name" class="text-xl font-bold">Username</h2>
-            <p id="p-status" class="text-xs text-gray-400 mb-6 italic">Người dùng Zalo Like</p>
-            <div id="p-actions" class="flex flex-col space-y-2">
-                <button id="p-btn" class="zalo-blue text-white py-3 rounded-xl font-bold">KẾT BẠN</button>
-                <button onclick="closeModal()" class="bg-gray-100 py-3 rounded-xl font-bold text-gray-500">ĐÓNG</button>
+    <div id="p-modal" class="hidden fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-8">
+        <div class="bg-white rounded-[32px] w-full max-w-xs p-6 text-center shadow-2xl">
+            <div id="p-img" class="w-24 h-24 mx-auto rounded-full mb-4 border-4 border-blue-50 bg-gray-100 flex items-center justify-center font-bold text-3xl text-blue-600">?</div>
+            <h2 id="p-id" class="text-xl font-bold text-slate-800">...</h2>
+            <p class="text-[10px] text-gray-400 mb-6 uppercase font-bold tracking-widest">Người dùng Zalo Like</p>
+            <div class="space-y-2">
+                <button id="p-action" class="w-full zalo-blue text-white py-3 rounded-xl font-bold shadow-lg">NHẮN TIN</button>
+                <button onclick="document.getElementById('p-modal').classList.add('hidden')" class="w-full bg-gray-100 text-gray-500 py-3 rounded-xl font-bold">ĐÓNG</button>
             </div>
         </div>
     </div>
 
     <script>
-        let client, activeChannel, currentUser, targetProfileUser;
+        let client, activeChan, currentUser, targetUser;
 
-        // --- AUTH & INIT ---
         async function auth() {
             const username = document.getElementById('user').value.trim();
             const password = document.getElementById('pass').value.trim();
-            const res = await fetch('/v2/portal-toc', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ username, password })
-            }).then(r => r.json());
-            if(res.error) return alert(res.error);
-            localStorage.setItem('zalo_session', JSON.stringify(res));
-            initApp(res);
+            const btn = document.getElementById('lbtn');
+            btn.innerText = "ĐANG XỬ LÝ...";
+            
+            try {
+                const res = await fetch('/v2/portal-toc', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ username, password })
+                }).then(r => r.json());
+                
+                if(res.error) return alert(res.error);
+                localStorage.setItem('zalo_sess', JSON.stringify({ ...res, time: Date.now() }));
+                initApp(res);
+            } catch(e) { alert("Lỗi Portal! Sếp kiểm tra Render."); }
+            finally { btn.innerText = "ĐĂNG NHẬP / ĐĂNG KÝ"; }
         }
 
         async function initApp(data) {
@@ -96,40 +101,58 @@
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app-screen').classList.remove('hidden');
             document.getElementById('my-ava').innerText = currentUser[0].toUpperCase();
+
             client = StreamChat.getInstance('bkzgy39gxa2u');
             await client.connectUser({ id: currentUser, name: currentUser }, data.token);
+            
             loadInbox();
+            client.on(e => (e.type === 'message.new') && loadInbox());
         }
 
-        // --- SEARCH (MATCH STRING) ---
         async function searchUsers() {
-            const q = document.getElementById('search-input').value;
-            const resDiv = document.getElementById('search-results');
-            if(q.length < 2) return resDiv.classList.add('hidden');
+            const q = document.getElementById('search').value.trim();
+            const resBox = document.getElementById('search-res');
+            if(q.length < 1) return resBox.classList.add('hidden');
             
-            const results = await client.queryUsers({ id: { $autocomplete: q }, id: { $ne: currentUser } });
-            resDiv.innerHTML = results.users.map(u => `
-                <div onclick="openProfile('${u.id}')" class="p-4 flex items-center space-x-3 active:bg-gray-100">
-                    <div class="w-8 h-8 zalo-blue rounded-full text-white flex items-center justify-center font-bold text-xs">${u.id[0].toUpperCase()}</div>
-                    <div class="text-sm font-bold">${u.id}</div>
+            const { users } = await client.queryUsers({ id: { $autocomplete: q }, id: { $ne: currentUser } });
+            resBox.innerHTML = users.map(u => `
+                <div onclick="openProfile('${u.id}')" class="p-4 flex items-center space-x-3 active:bg-gray-100 cursor-pointer">
+                    <div class="w-8 h-8 zalo-blue rounded-full text-white flex items-center justify-center font-bold text-xs uppercase">${u.id[0]}</div>
+                    <div class="text-sm font-bold text-slate-700">${u.id}</div>
                 </div>
             `).join('');
-            resDiv.classList.remove('hidden');
+            resBox.classList.remove('hidden');
         }
 
-        // --- CHANNELS & CHAT ---
+        async function openProfile(uid) {
+            targetUser = uid;
+            document.getElementById('search-res').classList.add('hidden');
+            document.getElementById('p-id').innerText = uid;
+            document.getElementById('p-img').innerText = uid[0].toUpperCase();
+            
+            const cid = [currentUser, uid].sort().join('-');
+            const btn = document.getElementById('p-action');
+            
+            btn.onclick = async () => {
+                const chan = client.channel('messaging', cid, { members: [currentUser, uid] });
+                await chan.watch();
+                document.getElementById('p-modal').classList.add('hidden');
+                openChat(cid);
+            };
+            
+            document.getElementById('p-modal').classList.remove('hidden');
+        }
+
         async function loadInbox() {
-            const filter = { type: 'messaging', members: { $in: [currentUser] } };
-            const channels = await client.queryChannels(filter, { last_message_at: -1 });
-            const list = document.getElementById('inbox-view');
-            list.innerHTML = channels.map(c => {
-                const other = Object.keys(c.state.members).find(m => m !== currentUser) || "Sảnh Chung";
+            const chans = await client.queryChannels({ members: { $in: [currentUser] } }, { last_message_at: -1 });
+            document.getElementById('inbox-view').innerHTML = chans.map(c => {
+                const other = Object.keys(c.state.members).find(m => m !== currentUser) || "Sảnh";
                 return `
-                    <div onclick="openChat('${c.id}')" class="p-4 flex items-center space-x-3 bg-white active:bg-gray-50">
-                        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center font-bold text-lg">${other[0].toUpperCase()}</div>
-                        <div class="flex-1 border-b pb-2">
-                            <div class="flex justify-between"><span class="font-bold text-sm">${other}</span></div>
-                            <div class="text-xs text-gray-400 truncate">${c.state.messages.slice(-1)[0]?.text || 'Bắt đầu trò chuyện ngay...'}</div>
+                    <div onclick="openChat('${c.id}')" class="p-4 flex items-center space-x-4 bg-white active:bg-gray-50 border-b border-gray-50 transition-all">
+                        <div class="w-14 h-14 bg-blue-100 text-[#0068ff] rounded-2xl flex items-center justify-center font-black text-xl uppercase border border-blue-200">${other[0]}</div>
+                        <div class="flex-1 overflow-hidden">
+                            <div class="font-bold text-sm text-slate-800">${other}</div>
+                            <div class="text-[11px] text-gray-400 truncate">${c.state.messages.slice(-1)[0]?.text || 'Nhấn để bắt đầu chat...'}</div>
                         </div>
                     </div>
                 `;
@@ -137,22 +160,21 @@
         }
 
         async function openChat(cid) {
-            activeChannel = client.channel('messaging', cid);
-            await activeChannel.watch();
-            document.getElementById('chat-window').classList.remove('hidden');
-            const other = Object.keys(activeChannel.state.members).find(m => m !== currentUser);
-            document.getElementById('chat-target-name').innerText = other || "Sảnh Chung";
-            targetProfileUser = other;
-            renderMsgs(activeChannel.state.messages);
-            activeChannel.on('message.new', e => renderMsgs([e.message], true));
+            activeChan = client.channel('messaging', cid);
+            await activeChan.watch();
+            targetUser = Object.keys(activeChan.state.members).find(m => m !== currentUser);
+            document.getElementById('chat-title').innerText = targetUser || "SẢNH CHUNG";
+            document.getElementById('chat-win').classList.remove('hidden');
+            renderMsgs(activeChan.state.messages);
+            activeChan.on('message.new', e => renderMsgs([e.message], true));
         }
 
         function renderMsgs(msgs, append=false) {
-            const container = document.getElementById('messages');
+            const container = document.getElementById('msgs');
             const html = msgs.map(m => {
                 const isMe = m.user.id === currentUser;
-                return `<div class="flex ${isMe ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-1">
-                    <div class="${isMe ? 'bg-[#e1f0ff] rounded-2xl rounded-tr-none' : 'bg-white rounded-2xl rounded-tl-none'} p-3 shadow-sm text-sm max-w-[80%]">
+                return `<div class="flex ${isMe ? 'justify-end' : 'justify-start'}">
+                    <div class="${isMe ? 'bg-[#e1f0ff] rounded-2xl rounded-tr-none border border-blue-200' : 'bg-white rounded-2xl rounded-tl-none'} p-3 shadow-sm text-sm max-w-[85%] break-words">
                         ${m.text}
                     </div>
                 </div>`;
@@ -162,60 +184,22 @@
         }
 
         async function send() {
-            const i = document.getElementById('msg-input');
-            if(!i.value) return;
-            await activeChannel.sendMessage({ text: i.value });
+            const i = document.getElementById('minput');
+            if(!i.value.trim()) return;
+            await activeChan.sendMessage({ text: i.value });
             i.value = '';
         }
 
-        // --- PROFILE & FRIEND SYSTEM ---
-        async function openProfile(uid) {
-            targetProfileUser = uid;
-            document.getElementById('search-results').classList.add('hidden');
-            document.getElementById('p-ava').innerText = uid[0].toUpperCase();
-            document.getElementById('p-name').innerText = uid;
-            
-            // Check if already connected
-            const cid = [currentUser, uid].sort().join('-');
-            const res = await client.queryChannels({ id: cid });
-            const pBtn = document.getElementById('p-btn');
-            
-            if(res.length > 0) {
-                pBtn.innerText = "NHẮN TIN";
-                pBtn.onclick = () => { closeModal(); openChat(cid); };
-            } else {
-                pBtn.innerText = "KẾT BẠN & CHAT";
-                pBtn.onclick = () => { createFriendship(uid); };
-            }
-            
-            document.getElementById('profile-modal').classList.remove('hidden');
-        }
-
-        async function createFriendship(uid) {
-            const cid = [currentUser, uid].sort().join('-');
-            const channel = client.channel('messaging', cid, { members: [currentUser, uid] });
-            await channel.create();
-            closeModal();
-            openChat(cid);
-        }
-
-        function showMyProfile() { openProfile(currentUser); }
-        function showFriendProfile() { openProfile(targetProfileUser); }
-        function closeModal() { document.getElementById('profile-modal').classList.add('hidden'); }
-        function closeChat() { document.getElementById('chat-window').classList.add('hidden'); loadInbox(); }
-
-        function switchTab(t) {
-            document.getElementById('inbox-view').classList.toggle('hidden', t !== 'inbox');
-            document.getElementById('req-view').classList.toggle('hidden', t !== 'req');
-            document.getElementById('btn-inbox').className = `flex flex-col items-center ${t==='inbox'?'tab-active':'text-gray-400'}`;
-            document.getElementById('btn-req').className = `flex flex-col items-center ${t==='req'?'tab-active':'text-gray-400'}`;
-        }
-
+        function closeChat() { document.getElementById('chat-win').classList.add('hidden'); loadInbox(); }
         function logout() { localStorage.clear(); location.reload(); }
 
         window.onload = () => {
-            const s = localStorage.getItem('zalo_session');
-            if(s) initApp(JSON.parse(s)); else document.getElementById('login-screen').classList.remove('hidden');
+            const s = localStorage.getItem('zalo_sess');
+            if(s) {
+                const d = JSON.parse(s);
+                if(Date.now() - d.time > 3600000) return logout();
+                initApp(d);
+            } else { document.getElementById('login-screen').classList.remove('hidden'); }
         };
     </script>
 </body>
