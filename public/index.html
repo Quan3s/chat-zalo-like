@@ -1,1 +1,126 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Zalo V2 Portal</title>
+    <script src="https://cdn.jsdelivr.net/npm/stream-chat"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-[#eef1f6] text-slate-800 min-h-screen font-sans">
 
+    <div id="login-screen" class="hidden flex flex-col items-center justify-center h-screen bg-white">
+        <h1 class="text-[#0068ff] text-4xl font-black mb-8 italic">Zalo</h1>
+        <div class="w-full max-w-xs space-y-4">
+            <input id="username" type="text" placeholder="Số điện thoại hoặc Username" 
+                class="w-full border-b border-gray-300 p-3 outline-none focus:border-[#0068ff] transition-all">
+            <button onclick="portalLogin()" class="w-full bg-[#0068ff] text-white py-3 rounded-full font-bold shadow-lg">ĐĂNG NHẬP</button>
+        </div>
+    </div>
+
+    <div id="chat-screen" class="hidden flex flex-col h-screen max-w-4xl mx-auto bg-white shadow-2xl">
+        <header class="p-4 bg-[#0068ff] text-white flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"><i class="fa-solid fa-users"></i></div>
+                <div>
+                    <h2 class="font-bold text-sm">Nhóm Chat Hệ Thống</h2>
+                    <p id="user-info" class="text-[10px] opacity-80 uppercase font-mono"></p>
+                </div>
+            </div>
+            <button onclick="logout()" class="p-2"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
+        </header>
+
+        <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-[#d6dbe1]"></div>
+
+        <div class="p-4 bg-white border-t border-gray-200">
+            <form onsubmit="sendMessage(event)" class="flex items-center space-x-2">
+                <input id="input" autocomplete="off" placeholder="Nhập tin nhắn..." class="flex-1 p-2 outline-none">
+                <button class="text-[#0068ff] text-xl px-2"><i class="fa-solid fa-paper-plane"></i></button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let client, channel;
+
+        // Tự động kiểm tra Session khi load trang
+        window.onload = async () => {
+            const savedSession = localStorage.getItem('zalo_session');
+            if (savedSession) {
+                const data = JSON.parse(savedSession);
+                await startChat(data.username, data.token);
+            } else {
+                document.getElementById('login-screen').classList.remove('hidden');
+            }
+        };
+
+        async function portalLogin() {
+            const username = document.getElementById('username').value.trim();
+            if(!username) return;
+
+            const res = await fetch('/v2/portal-toc', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ username })
+            }).then(r => r.json());
+
+            if(res.status === 'success') {
+                // Lưu vào LocalStorage
+                localStorage.setItem('zalo_session', JSON.stringify({
+                    username: res.username,
+                    token: res.token,
+                    sessionId: res.sessionId
+                }));
+                await startChat(res.username, res.token);
+            }
+        }
+
+        async function startChat(username, token) {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('chat-screen').classList.remove('hidden');
+            document.getElementById('user-info').innerText = `ID: ${username}`;
+
+            client = StreamChat.getInstance('bkzgy39gxa2u');
+            await client.connectUser({ id: username, name: username }, token);
+
+            channel = client.channel('messaging', 'zalo_public', { name: 'Sảnh Zalo' });
+            await channel.watch();
+
+            renderMessages(channel.state.messages);
+            channel.on('message.new', event => renderMessages([event.message], true));
+        }
+
+        function renderMessages(msgs, append = false) {
+            const container = document.getElementById('messages');
+            const html = msgs.map(m => {
+                const isMe = m.user.id === client.userID;
+                return `
+                    <div class="flex ${isMe ? 'justify-end' : 'justify-start'}">
+                        <div class="${isMe ? 'bg-[#e7f3ff] border border-blue-200' : 'bg-white'} p-3 rounded-xl max-w-[80%] shadow-sm text-sm">
+                            <p class="text-[10px] font-bold text-gray-500 mb-1">${m.user.id}</p>
+                            ${m.text}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            if(append) container.innerHTML += html;
+            else container.innerHTML = html;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function sendMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('input');
+            if(!input.value.trim()) return;
+            await channel.sendMessage({ text: input.value });
+            input.value = '';
+        }
+
+        function logout() {
+            localStorage.clear();
+            location.reload();
+        }
+    </script>
+</body>
+</html>
