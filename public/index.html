@@ -3,154 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Zalo Like - Kết nối bạn bè</title>
+    <title>Zalo Like - Full</title>
     <script src="https://cdn.jsdelivr.net/npm/stream-chat"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .zalo-blue { background-color: #0068ff; }
+        .zalo-bg { background-color: #ebeef2; }
+    </style>
 </head>
-<body class="bg-[#f4f7fa] text-slate-900 min-h-screen font-sans">
+<body class="bg-gray-100 h-screen flex items-center justify-center">
 
-    <div id="login-screen" class="hidden flex flex-col items-center justify-center h-screen px-4">
-        <div class="bg-white p-8 rounded-[40px] shadow-2xl w-full max-w-sm text-center border border-slate-100">
-            <h1 class="text-[#0068ff] text-6xl font-black mb-1 italic tracking-tighter">Zalo</h1>
-            <p class="text-slate-400 font-bold text-xs uppercase tracking-widest mb-8">Like Edition</p>
-            
-            <div class="space-y-4">
-                <input id="username" type="text" placeholder="Số điện thoại hoặc Username" 
-                    class="w-full bg-slate-50 border-none p-4 rounded-2xl outline-none focus:ring-2 focus:ring-[#0068ff]/20 transition-all text-center font-bold">
-                <button onclick="handleAuth()" id="login-btn" class="w-full bg-[#0068ff] text-white py-4 rounded-2xl font-bold shadow-lg shadow-blue-200 active:scale-95 transition-all">
-                    ĐĂNG NHẬP
-                </button>
-            </div>
-            <p class="mt-6 text-[10px] text-slate-400 font-medium italic">Tài khoản tự hủy sau 7 ngày vắng mặt</p>
+    <div id="login-screen" class="hidden w-full max-w-sm bg-white p-8 rounded-3xl shadow-2xl">
+        <h1 class="text-[#0068ff] text-4xl font-black italic text-center mb-8">Zalo Like</h1>
+        <div class="space-y-4">
+            <input id="user" type="text" placeholder="Tên đăng nhập" class="w-full border-b p-3 outline-none focus:border-blue-500">
+            <input id="pass" type="password" placeholder="Mật khẩu" class="w-full border-b p-3 outline-none focus:border-blue-500">
+            <button onclick="auth()" class="w-full zalo-blue text-white py-4 rounded-2xl font-bold shadow-lg">ĐĂNG NHẬP / ĐĂNG KÝ</button>
         </div>
     </div>
 
-    <div id="chat-screen" class="hidden flex flex-col h-screen max-w-2xl mx-auto bg-[#ebeef2] shadow-2xl">
-        <header class="p-4 bg-[#0068ff] text-white flex justify-between items-center z-10">
+    <div id="app-screen" class="hidden w-full h-screen max-w-2xl bg-white shadow-2xl flex flex-col">
+        <header class="zalo-blue p-4 text-white flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center border border-white/30">
-                    <i class="fa-solid fa-ghost"></i>
-                </div>
-                <div>
-                    <h2 class="font-bold text-sm tracking-tight leading-none">PHÒNG CHAT CỘNG ĐỒNG</h2>
-                    <span id="user-display" class="text-[9px] opacity-70 font-mono"></span>
-                </div>
+                <div id="avatar" class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center font-bold">U</div>
+                <h2 class="font-bold">Zalo Like</h2>
             </div>
-            <button onclick="logout()" class="text-white/80 hover:text-white p-2"><i class="fa-solid fa-power-off"></i></button>
+            <div class="flex space-x-4">
+                <button onclick="addFriend()"><i class="fa-solid fa-user-plus"></i></button>
+                <button onclick="logout()"><i class="fa-solid fa-power-off"></i></button>
+            </div>
         </header>
 
-        <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-4">
+        <div id="inbox-view" class="flex-1 overflow-y-auto">
+            <div class="p-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Tin nhắn gần đây</div>
+            <div id="channel-list" class="divide-y divide-gray-100"></div>
+        </div>
+
+        <div id="chat-view" class="hidden fixed inset-0 bg-white flex flex-col z-50">
+            <header class="zalo-blue p-4 text-white flex items-center">
+                <button onclick="closeChat()" class="mr-4"><i class="fa-solid fa-chevron-left"></i></button>
+                <div id="chat-target" class="font-bold">Tên bạn bè</div>
+            </header>
+            <div id="messages" class="flex-1 zalo-bg overflow-y-auto p-4 space-y-4"></div>
+            <div class="p-3 border-t flex items-center space-x-2">
+                <input id="msg-input" placeholder="Nhập tin nhắn..." class="flex-1 p-2 outline-none">
+                <button onclick="sendMsg()" class="text-[#0068ff] text-2xl"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
-
-        <div id="typing" class="px-5 text-[10px] text-blue-500 font-bold h-4 italic"></div>
-
-        <div class="p-3 bg-white flex items-center space-x-2 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
-            <button class="text-slate-400 px-1 text-xl"><i class="fa-regular fa-face-smile"></i></button>
-            <input id="input" autocomplete="off" oninput="sendTyping()" placeholder="Nhập tin nhắn..." 
-                class="flex-1 p-2 outline-none text-sm">
-            <button onclick="sendMessage(event)" class="text-[#0068ff] text-2xl p-2 hover:scale-110 active:scale-90 transition-all">
-                <i class="fa-solid fa-paper-plane"></i>
-            </button>
         </div>
     </div>
 
     <script>
-        let client, channel, currentUser;
+        let client, activeChannel, currentUser;
 
-        window.onload = async () => {
-            const saved = localStorage.getItem('zalo_like_session');
-            if (saved) {
-                const data = JSON.parse(saved);
-                await startChat(data.username, data.token);
-            } else {
-                document.getElementById('login-screen').classList.remove('hidden');
-            }
-        };
-
-        async function handleAuth() {
-            const username = document.getElementById('username').value.trim().toLowerCase();
-            if(!username || username.length < 3) return alert("Tên phải từ 3 ký tự sếp ơi!");
+        async function auth() {
+            const username = document.getElementById('user').value.trim();
+            const password = document.getElementById('pass').value.trim();
             
-            const btn = document.getElementById('login-btn');
-            btn.innerText = "ĐANG KẾT NỐI...";
-            btn.disabled = true;
+            const res = await fetch('/v2/portal-toc', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ username, password })
+            }).then(r => r.json());
 
-            try {
-                const res = await fetch('/v2/portal-toc', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ username })
-                }).then(r => r.json());
+            if(res.error) return alert(res.error);
 
-                if(res.status === 'success') {
-                    localStorage.setItem('zalo_like_session', JSON.stringify(res));
-                    await startChat(res.username, res.token);
-                }
-            } catch (e) { alert("Lỗi Portal!"); }
-            finally { btn.innerText = "ĐĂNG NHẬP"; btn.disabled = false; }
+            localStorage.setItem('zalo_session', JSON.stringify(res));
+            initApp(res);
         }
 
-        async function startChat(username, token) {
-            currentUser = username;
+        async function initApp(data) {
+            currentUser = data.username;
             document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('chat-screen').classList.remove('hidden');
-            document.getElementById('user-display').innerText = `@${username}`;
+            document.getElementById('app-screen').classList.remove('hidden');
+            document.getElementById('avatar').innerText = currentUser[0].toUpperCase();
 
             client = StreamChat.getInstance('bkzgy39gxa2u');
-            try {
-                await client.connectUser({ id: username, name: username }, token);
-                channel = client.channel('messaging', 'zalo_main_room', { name: 'Sảnh Zalo Like' });
-                await channel.watch();
+            await client.connectUser({ id: currentUser, name: currentUser }, data.token);
 
-                renderMessages(channel.state.messages);
-                channel.on('message.new', e => renderMessages([e.message], true));
-                channel.on('typing.start', e => { if(e.user.id !== currentUser) document.getElementById('typing').innerText = `${e.user.id} đang soạn tin...` });
-                channel.on('typing.stop', () => document.getElementById('typing').innerText = '');
-            } catch(e) { logout(); }
+            loadChannels();
         }
 
-        function renderMessages(msgs, append = false) {
-            const container = document.getElementById('messages');
-            const html = msgs.map(m => {
-                const isMe = m.user.id === currentUser;
+        async function loadChannels() {
+            const filter = { type: 'messaging', members: { $in: [currentUser] } };
+            const channels = await client.queryChannels(filter, { last_message_at: -1 });
+            
+            const list = document.getElementById('channel-list');
+            list.innerHTML = channels.map(c => {
+                const target = Object.keys(c.state.members).find(m => m !== currentUser) || 'Sảnh Chung';
                 return `
-                    <div class="flex ${isMe ? 'justify-end' : 'justify-start'} animate-in">
-                        <div class="max-w-[85%]">
-                            ${!isMe ? `<p class="text-[9px] font-bold text-slate-400 mb-1 ml-2">${m.user.id}</p>` : ''}
-                            <div class="${isMe ? 'bg-[#e1f0ff] border border-blue-100 text-slate-800 rounded-2xl rounded-tr-none' : 'bg-white text-slate-800 rounded-2xl rounded-tl-none'} p-3 shadow-sm text-sm">
-                                ${m.text}
-                            </div>
+                    <div onclick="openChat('${c.id}')" class="p-4 flex items-center space-x-3 hover:bg-gray-50 cursor-pointer">
+                        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center font-bold">${target[0].toUpperCase()}</div>
+                        <div class="flex-1">
+                            <div class="font-bold text-sm">${target}</div>
+                            <div class="text-xs text-gray-400 truncate">${c.state.messages.slice(-1)[0]?.text || 'Chưa có tin nhắn'}</div>
                         </div>
                     </div>
                 `;
             }).join('');
-            if(append) container.innerHTML += html;
-            else container.innerHTML = html;
+        }
+
+        async function openChat(cid) {
+            activeChannel = client.channel('messaging', cid);
+            await activeChannel.watch();
+            
+            document.getElementById('chat-view').classList.remove('hidden');
+            document.getElementById('chat-target').innerText = cid.includes('-') ? cid.replace(currentUser, '').replace('-', '') : 'Sảnh Chung';
+            
+            renderMsgs(activeChannel.state.messages);
+            activeChannel.on('message.new', e => renderMsgs([e.message], true));
+        }
+
+        function renderMsgs(msgs, append=false) {
+            const container = document.getElementById('messages');
+            const html = msgs.map(m => {
+                const isMe = m.user.id === currentUser;
+                return `<div class="flex ${isMe ? 'justify-end' : 'justify-start'}">
+                    <div class="${isMe ? 'bg-[#e1f0ff] rounded-2xl rounded-tr-none' : 'bg-white rounded-2xl rounded-tl-none'} p-3 shadow-sm text-sm max-w-[80%]">
+                        ${m.text}
+                    </div>
+                </div>`;
+            }).join('');
+            if(append) container.innerHTML += html; else container.innerHTML = html;
             container.scrollTop = container.scrollHeight;
         }
 
-        async function sendMessage(e) {
-            if(e) e.preventDefault();
-            const input = document.getElementById('input');
-            const val = input.value.trim();
-            if(!val) return;
+        async function sendMsg() {
+            const input = document.getElementById('msg-input');
+            if(!input.value) return;
+            await activeChannel.sendMessage({ text: input.value });
             input.value = '';
-            await channel.sendMessage({ text: val });
         }
 
-        function sendTyping() { channel.keystroke(); }
-
-        function logout() {
-            localStorage.clear();
-            location.reload();
+        function addFriend() {
+            const id = prompt("Nhập ID bạn bè muốn kết bạn & nhắn tin:");
+            if(id) openChat([currentUser, id].sort().join('-'));
         }
+
+        function closeChat() { document.getElementById('chat-view').classList.add('hidden'); loadChannels(); }
+
+        function logout() { localStorage.clear(); location.reload(); }
+
+        window.onload = () => {
+            const s = localStorage.getItem('zalo_session');
+            if(s) initApp(JSON.parse(s)); else document.getElementById('login-screen').classList.remove('hidden');
+        };
     </script>
-
-    <style>
-        @keyframes in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-in { animation: in 0.2s ease-out forwards; }
-        #messages::-webkit-scrollbar { width: 0; background: transparent; }
-    </style>
 </body>
 </html>
